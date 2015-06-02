@@ -24,7 +24,13 @@
 
 
 ## Info
+* Version: v0.2
 * URL: [AHK Thread](http://ahkscript.org/boards/viewtopic.php?f=6&t=7854)
+
+
+## Changelog
+* 0.2 | Changed Get- & SetDeviceGammaRamp ; Changed GetLastError to A_LastError ; Shorter msdn-links
+* 0.1 | First Release
 
 
 ## Contributing

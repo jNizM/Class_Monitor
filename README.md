@@ -1,9 +1,9 @@
-# Monitor Class (WinAPI) by jNizM
+# AHK Monitor Class
 Set monitors brightness and color temperature
 
 
 ## Example
-### Sample with Settings-Gui (Brightness, Color-Temperature, Red-Gree-Blue)
+### Sample with Settings-Gui (Brightness, Color-Temperature or Red-Green-Blue manually)
 ![Class_Monitor_Sample](img/Class_Monitor_Sample.png)
 
 

@@ -1,42 +1,30 @@
 # Monitor Class (WinAPI) by jNizM
-
-## Converted Monitor Functions
-* DestroyPhysicalMonitor()
-* DestroyPhysicalMonitors()
-* GetMonitorBrightness()
-* GetMonitorColorTemperature()
-* GetMonitorContrast()
-* GetNumberOfPhysicalMonitorsFromHMONITOR()
-* GetPhysicalMonitorsFromHMONITOR()
-* SetMonitorBrightness()
-* SetMonitorColorTemperature()
-* SetMonitorContrast()
-* GetDeviceGammaRamp()
-* SetDeviceGammaRamp()
-* MonitorFromWindow()
-* EnumDisplayMonitors()
-* MonitorEnumProc()
+Set monitors brightness and color temperature
 
 
-## Examples:
-### Classic GUI (Brightness, Contrast & Gamma)
-![Class_Monitor_GUI_Classic](Class_Monitor_GUI_Classic.png)
+## Example
+### Sample with Settings-Gui (Brightness, Color-Temperature, Red-Gree-Blue)
+![Class_Monitor_Sample](img/Class_Monitor_Sample.png)
 
 
 ## Info
-* Version: v0.2
-* URL: [AHK Thread](http://ahkscript.org/boards/viewtopic.php?f=6&t=7854)
-
-
-## Changelog
-* 0.2 | Changed Get- & SetDeviceGammaRamp ; Changed GetLastError to A_LastError ; Shorter msdn-links
-* 0.1 | First Release
+* [AHK Thread](https://autohotkey.com/boards/viewtopic.php?t=7854)
+* [GetDeviceGammaRamp](https://msdn.microsoft.com/en-us/library/dd316946(v=vs.85).aspx)
+* [SetDeviceGammaRamp](https://msdn.microsoft.com/en-us/library/dd372194(v=vs.85).aspx)
+* [How to Convert Temperature (K) to RGB](http://www.tannerhelland.com/4435/convert-temperature-rgb-algorithm-code/)
 
 
 ## Contributing
-* special thanks to just me & SKAN
 * thanks to AutoHotkey Community
+
+
+## Questions / Bugs / Issues
+Report any bugs or issues on the [AHK Thread](https://autohotkey.com/boards/viewtopic.php?t=7854). Same for any questions.
 
 
 ## Copyright and License
 [Unlicense](LICENSE)
+
+
+## Donations
+[Donations are appreciated if I could help you](https://www.paypal.me/smithz)

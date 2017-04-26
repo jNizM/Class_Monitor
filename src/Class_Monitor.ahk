@@ -1,188 +1,60 @@
-﻿Class Monitor                                                                     ; http://msdn.com/library/dd692964(vs.85,en-us)
+﻿; ===============================================================================================================================
+
+Class Monitor
 {
-    static FreeSize, FreeArray
-    static hDXVA2 := DllCall("LoadLibrary", "Str", "dxva2.dll", "Ptr")
-
-; ===============================================================================================================================
-
-    __New()
+    SetBrightness(red := 128, green := 128, blue := 128)        ; https://msdn.microsoft.com/en-us/library/dd372194(v=vs.85).aspx
     {
-        this._DestroyPhysicalMonitor                  := DllCall("GetProcAddress", "Ptr", this.hDXVA2, "Ptr",    6, "Ptr")
-        this._DestroyPhysicalMonitors                 := DllCall("GetProcAddress", "Ptr", this.hDXVA2, "Ptr",    7, "Ptr")
-        this._GetMonitorBrightness                    := DllCall("GetProcAddress", "Ptr", this.hDXVA2, "Ptr",    9, "Ptr")
-       ;this._GetMonitorColorTemperature              := DllCall("GetProcAddress", "Ptr", this.hDXVA2, "Ptr",   11, "Ptr")
-        this._GetMonitorContrast                      := DllCall("GetProcAddress", "Ptr", this.hDXVA2, "Ptr",   12, "Ptr")
-        this._GetNumberOfPhysicalMonitorsFromHMONITOR := DllCall("GetProcAddress", "Ptr", this.hDXVA2, "Ptr",   18, "Ptr")
-        this._GetPhysicalMonitorsFromHMONITOR         := DllCall("GetProcAddress", "Ptr", this.hDXVA2, "Ptr",   20, "Ptr")
-        this._SetMonitorBrightness                    := DllCall("GetProcAddress", "Ptr", this.hDXVA2, "Ptr",   30, "Ptr")
-       ;this._SetMonitorColorTemperature              := DllCall("GetProcAddress", "Ptr", this.hDXVA2, "Ptr",   31, "Ptr")
-        this._SetMonitorContrast                      := DllCall("GetProcAddress", "Ptr", this.hDXVA2, "Ptr",   32, "Ptr")
-        this.hDC := DllCall("user32.dll\GetDC", "Ptr", 0, "Ptr")
+        loop % VarSetCapacity(buf, 1536, 0) / 6
+        {
+            NumPut((r := (red   + 128) * (A_Index - 1)) > 65535 ? 65535 : r, buf,        2 * (A_Index - 1), "ushort")
+            NumPut((g := (green + 128) * (A_Index - 1)) > 65535 ? 65535 : g, buf,  512 + 2 * (A_Index - 1), "ushort")
+            NumPut((b := (blue  + 128) * (A_Index - 1)) > 65535 ? 65535 : b, buf, 1024 + 2 * (A_Index - 1), "ushort")
+        }
+        DllCall("gdi32\SetDeviceGammaRamp", "ptr", hDC := DllCall("user32\GetDC", "ptr", 0, "ptr"), "ptr", &buf)
+        DllCall("user32\ReleaseDC", "ptr", 0, "ptr", hDC)
     }
 
-; ===============================================================================================================================
-
-    GetDeviceGammaRamp()                                                          ; http://msdn.com/library/dd316946(vs.85,en-us)
+    GetBrightness()                                             ; https://msdn.microsoft.com/en-us/library/dd316946(v=vs.85).aspx
     {
         VarSetCapacity(buf, 1536, 0)
-        if !(DllCall("gdi32.dll\GetDeviceGammaRamp", "Ptr", this.hDC, "Ptr", &buf))
-            return "*" A_LastError
-        return NumGet(buf, 2, "UShort") - 128
+        DllCall("gdi32\GetDeviceGammaRamp", "ptr", hDC := DllCall("user32\GetDC", "ptr", 0, "ptr"), "ptr", &buf)
+        CLR := {}
+        CLR.Red   := NumGet(buf,        2, "ushort") - 128
+        CLR.Green := NumGet(buf,  512 + 2, "ushort") - 128
+        CLR.Blue  := NumGet(buf, 1024 + 2, "ushort") - 128
+        return CLR, DllCall("user32\ReleaseDC", "ptr", 0, "ptr", hDC)
     }
 
-; ===============================================================================================================================
-
-    SetDeviceGammaRamp(SetNew := 128)                                             ; http://msdn.com/library/dd372194(vs.85,en-us)
+    SetColorTemperature(temp := 6500, alpha := 0.5)   ; http://www.tannerhelland.com/4435/convert-temperature-rgb-algorithm-code/
     {
-        SetNew := (SetNew > 255) ? 255 : (SetNew < 0) ? 0 : SetNew
-        loop % VarSetCapacity(buf, 1536) / 6
-            NumPut((N := (SetNew + 128) * (A_Index - 1)) > 65535 ? 65535 : N, buf, 2 * (A_Index - 1), "UShort")
-        DllCall("RtlMoveMemory", "Ptr", &buf +  512, "Ptr", &buf, "UPtr", 512, "Ptr")
-        DllCall("RtlMoveMemory", "Ptr", &buf + 1024, "Ptr", &buf, "UPtr", 512, "Ptr")
-        if !(DllCall("gdi32.dll\SetDeviceGammaRamp", "Ptr", this.hDC, "Ptr", &buf))
-            return "*" A_LastError
-        return SetNew
-    }
+        temp /= 100
 
-; ===============================================================================================================================
-
-    MonitorFromWindow(hWnd := 0, Flags := 0)                                      ; http://msdn.com/library/dd145064(vs.85,en-us)
-    {
-        return DllCall("user32.dll\MonitorFromWindow", "Ptr", hWnd, "UInt", Flags, "Ptr")
-    }
-
-    EnumDisplayMonitors(MonitorNumber)                                            ; http://msdn.com/library/dd162610(vs.85,en-us)
-    {
-        static MonitorEnumProc := RegisterCallback("Monitor.MonitorEnumProc")
-        static Monitors
-        static Init := Monitor.EnumDisplayMonitors("")
-        if (MonitorNumber = "")
-        {
-            Monitors := {}
-            return DllCall("user32.dll\EnumDisplayMonitors", "Ptr", 0, "Ptr", 0, "Ptr", MonitorEnumProc, "Ptr", &Monitors)
+        if (temp <= 66)
+            red := 255
+        else {
+            red := 329.698727446 * ((temp - 60) ^ -0.1332047592)
+            red := (red < 0) ? 0 : (red > 255) ? 255 : red
         }
-        return Monitors[MonitorNumber]
+
+        if (temp <= 66) {
+            green := 99.4708025861 * Ln(temp) - 161.1195681661
+            green := (green < 0) ? 0 : (green > 255) ? 255 : green
+        } else {
+            green := 288.1221695283 * ((temp - 60) ^ -0.0755148492)
+            green := (green < 0) ? 0 : (green > 255) ? 255 : green
+        }
+
+        if (temp >= 66)
+            blue := 255
+        else if (temp <= 19)
+            blue := 0
+        else {
+            blue := 138.5177312231 * Ln(temp - 10) - 305.0447927307
+            blue := (blue < 0) ? 0 : (blue > 255) ? 255 : blue
+        }
+
+        return this.SetBrightness(red * alpha, green * alpha, blue * alpha)
     }
-
-    MonitorEnumProc(hDC, RECT, lParam)                                            ; http://msdn.com/library/dd145061(vs.85,en-us)
-    {
-        hMonitor := this
-        return Object(lParam).Push(hMonitor)
-    }
-
-; ===============================================================================================================================
-
-    DestroyPhysicalMonitor(hMonitor)                                              ; http://msdn.com/library/dd692936(vs.85,en-us)
-    {
-        if !(DllCall(this._DestroyPhysicalMonitor, "Ptr", hMonitor))
-            return "*" A_LastError
-        return true
-    }
-
-; ===============================================================================================================================
-
-    DestroyPhysicalMonitors(Size, PHYSICAL_MONITOR)                               ; http://msdn.com/library/dd692937(vs.85,en-us)
-    {
-        if !(DllCall(this._DestroyPhysicalMonitors, "UInt", Size, "Ptr", &PHYSICAL_MONITOR))
-            return "*" A_LastError
-        return true
-    }
-
-; ===============================================================================================================================
-
-    GetMonitorBrightness(MonNum := 1)                                             ; http://msdn.com/library/dd692939(vs.85,en-us)
-    {
-        hMonitor := this.GetPhysicalMonitorsFromHMONITOR(MonNum), min := cur := max := ""
-        if !(DllCall(this._GetMonitorBrightness, "Ptr", hMonitor, "UInt*", min, "UInt*", cur, "UInt*", max))
-            return "*" A_LastError
-        GMB := {}, GMB.MinimumBrightness := min, GMB.CurrentBrightness := cur, GMB.MaximumBrightness := max
-        return GMB
-    }
-
-; ===============================================================================================================================
-    /*
-    GetMonitorColorTemperature(MonNum := 1)                                       ; http://msdn.com/library/dd692941(vs.85,en-us)
-    {
-        static MC_COLOR_TEMPERATURE := ["UNKNOWN", "4000K", "5000K", "6500K", "7500K", "8200K", "9300K", "10000K", "11500K"]
-        hMonitor := this.GetPhysicalMonitorsFromHMONITOR(MonNum)
-        if !(DllCall(this._GetMonitorColorTemperature, "Ptr", hMonitor, "UInt*", CurColTemp))
-            return "*" A_LastError
-        return MC_COLOR_TEMPERATURE[CurColTemp]
-    }
-    */
-; ===============================================================================================================================
-
-    GetMonitorContrast(MonNum := 1)                                               ; http://msdn.com/library/dd692942(vs.85,en-us)
-    {
-        hMonitor := this.GetPhysicalMonitorsFromHMONITOR(MonNum), min := cur := max := ""
-        if !(DllCall(this._GetMonitorContrast, "Ptr", hMonitor, "UInt*", min, "UInt*", cur, "UInt*", max))
-            return "*" A_LastError
-        GMC := {}, GMC.MinimumContrast := min, GMC.CurrentContrast := cur, GMC.MaximumContrast := max
-        return GMC
-    }
-
-; ===============================================================================================================================
-
-    GetNumberOfPhysicalMonitorsFromHMONITOR(ByRef hMonitor, MonNum := 1)          ; http://msdn.com/library/dd692948(vs.85,en-us)
-    {
-        hMonitor := this.EnumDisplayMonitors(MonNum), PhysMons := ""
-        if !(DllCall(this._GetNumberOfPhysicalMonitorsFromHMONITOR, "Ptr", hMonitor, "UInt*", PhysMons))
-            return "*" A_LastError
-        return PhysMons
-    }
-
-; ===============================================================================================================================
-
-    GetPhysicalMonitorsFromHMONITOR(MonNum := 1)                                  ; http://msdn.com/library/dd692950(vs.85,en-us)
-    {
-        FreeSize := PhysMons := this.GetNumberOfPhysicalMonitorsFromHMONITOR(hMonitor, MonNum)
-        VarSetCapacity(PHYSICAL_MONITOR, (A_PtrSize + 256) * PhysMons, 0)
-        if !(DllCall(this._GetPhysicalMonitorsFromHMONITOR, "Ptr", hMonitor, "UInt", PhysMons, "Ptr", &PHYSICAL_MONITOR))
-            return "*" A_LastError
-        return FreeArray := NumGet(PHYSICAL_MONITOR, 0, "UPtr")
-    }
-
-; ===============================================================================================================================
-
-    SetMonitorBrightness(MonNum := 1, SetNew := 50)                               ; http://msdn.com/library/dd692972(vs.85,en-us)
-    {
-        SetNew := (SetNew > 100) ? 100 : (SetNew < 0) ? 0 : SetNew
-        hMonitor := this.GetPhysicalMonitorsFromHMONITOR(MonNum)
-        if !(DllCall(this._SetMonitorBrightness, "Ptr", hMonitor, "UInt", SetNew))
-            return "*" A_LastError
-        return SetNew
-    }
-
-; ===============================================================================================================================
-    /*
-    SetMonitorColorTemperature(MonNum := 1, SetNew := 3)                          ; http://msdn.com/library/dd692973(vs.85,en-us)
-    {
-        hMonitor := this.GetPhysicalMonitorsFromHMONITOR(MonNum)
-        if !(DllCall(this._SetMonitorColorTemperature, "Ptr", hMonitor, "UInt", SetNew))
-            return "*" A_LastError
-        return true
-    }
-    */
-; ===============================================================================================================================
-
-    SetMonitorContrast(MonNum := 1, SetNew := 50)                                 ; http://msdn.com/library/dd692974(vs.85,en-us)
-    {
-        SetNew := (SetNew > 100) ? 100 : (SetNew < 0) ? 0 : SetNew
-        hMonitor := this.GetPhysicalMonitorsFromHMONITOR(MonNum)
-        if !(DllCall(this._SetMonitorContrast, "Ptr", hMonitor, "UInt", SetNew))
-            return "*" A_LastError
-        return SetNew
-    }
-
-; ===============================================================================================================================
-
-    OnExit()
-    {
-        this.DestroyPhysicalMonitors(this.FreeSize, this.FreeArray)
-        DllCall("user32.dll\ReleaseDC", "Ptr", 0, "Ptr", this.hDC)
-        DllCall("FreeLibrary", "Ptr", this.hDXVA2)
-    }
-
-; ===============================================================================================================================
-
 }
+
+; ===============================================================================================================================

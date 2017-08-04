@@ -98,7 +98,7 @@ return
 
 BTN_COLORTEMPERATURE:
     Gui, Submit, NoHide
-    Monitor.SetColorTemperature(MySld02, MySld01/ 100)
+    Monitor.SetColorTemperature(MySld02, MySld01 / 100)
     CLR := Monitor.GetBrightness()
     GuiControl,, MyEdt03, % MonRed := CLR.Red
     GuiControl,, MyEdt04, % MonGreen := CLR.Green

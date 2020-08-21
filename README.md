@@ -80,9 +80,12 @@ Monitor.RestoreFactoryDefault(\\.\DISPLAY2")   ; or just "2"
 Monitor.RestoreFactoryDefault()   ; empty parameter
 ```
 
+## AHK v2 rewrite
+[GitHub](https://github.com/tigerlily-dev/Monitor-Configuration-Class) by tigerlily-dev
+
 
 ## Questions / Bugs / Issues
-Report any bugs or issues on the [AHK Thread](https://www.autohotkey.com/boards/viewtopic.php?f=6&t=62955). Same for any questions.
+Report any bugs or issues on the [AHK Thread](https://www.autohotkey.com/boards/viewtopic.php?f=6&t=7854). Same for any questions.
 
 
 ## Copyright and License
